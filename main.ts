@@ -29,6 +29,7 @@ namespace Mosiwi_cube {
         display_sw = sw;
     }
 
+
     /**
      * A 16-bit binary number is mapped to a layer of 16 leds: 0bxxxxxxxxxxxxxxxx --> LED0~LED15
      * @param LEDs
@@ -40,6 +41,26 @@ namespace Mosiwi_cube {
         display_buf[cube * 4 + layer] = LEDs;
     }
 
+
+    /**
+     * A 4*4 image parameter.
+     * @param LEDs
+     */
+    //% block="Update Cube: $cube Layer: $layer LED0-LED15: $LEDs Img"
+    //% cube.min=0 cube.max=4 layer.min=0 layer.max=3
+    //% inlineInputMode=inline
+    export function layer(cube: number, layer: number, LEDs: Image){
+        let layerLed = 0;
+        for(let y = 0; y < 4; y++){
+            for (let x = 0; x < 4; x++) {
+                if (LEDs.pixel(0, 0) == true)
+                    layerLed  |= 1 << (y * 4 + x);
+            }
+        }
+        display_buf[cube * 4 + layer] = layerLed;
+    }
+
+
     //% block="Update Cube: $cube X: $x Y: $y Z: $z LED: $Off_On"
     //% cube.min=0 cube.max=4 x.min=0 x.max=3 y.min=0 y.max=3 z.min=0 z.max=3 Off_On.min=0 Off_On.max=1
     //% inlineInputMode=inline
@@ -47,6 +68,7 @@ namespace Mosiwi_cube {
         if (Off_On == 1) display_buf[cube * 4 + z] |= 1 << (x + (y * 4));
         if (Off_On == 0) display_buf[cube * 4 + z] &= ~(1 << (x + (y * 4)));
     }
+
 
     function spi_wrete(dat: number, layer: number){
         pins.digitalWritePin(DigitalPin.P16, 0);
@@ -66,6 +88,7 @@ namespace Mosiwi_cube {
             pins.spiWrite(0);
         }
     }
+
 
     // This function is executed every 5 milliseconds.
     loops.everyInterval(5, function () {
