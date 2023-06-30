@@ -15,7 +15,7 @@ namespace Mosiwi_cube {
     //% block="Cube init $cube_num"
     //% cube_num.min=0 cube_num.max=4
     export function cube_init (cube_num: number) {
-        pins.spiFrequency(1000000);
+        pins.spiFrequency(25000000);
         pins.spiPins(DigitalPin.P15, DigitalPin.P14, DigitalPin.P13);
         pins.spiFormat(8, 3);
 
@@ -44,8 +44,8 @@ namespace Mosiwi_cube {
     //% cube.min=0 cube.max=4 x.min=0 x.max=3 y.min=0 y.max=3 z.min=0 z.max=3 Off_On.min=0 Off_On.max=1
     //% inlineInputMode=inline
     export function cube_update_xyz(cube: number, x: number, y: number, z: number, Off_On: number) {
-        if (Off_On == 1) display_buf[cube * 4 + z] |= 1 << (x*y);
-        if (Off_On == 0) display_buf[cube * 4 + z] &= ~(1 << (x * y));
+        if (Off_On == 1) display_buf[cube * 4 + z] |= 1 << (x + (y * 4));
+        if (Off_On == 0) display_buf[cube * 4 + z] &= ~(1 << (x + (y * 4)));
     }
 
     function spi_wrete(dat: number, layer: number){
@@ -53,7 +53,7 @@ namespace Mosiwi_cube {
         pins.spiWrite(layer);
         pins.spiWrite(dat >> 8);
         pins.spiWrite(dat);
-        for (let i = 0; i < ~~(display_buf_index/4); i++){
+        for (let i = 0; i < ~~(display_buf_index / 4); i++){
             pins.spiWrite(0);
             pins.spiWrite(0);
             pins.spiWrite(0);
@@ -67,16 +67,15 @@ namespace Mosiwi_cube {
         }
     }
 
+    // This function is executed every 5 milliseconds.
     loops.everyInterval(5, function () {
         if (display_sw == SW.Enabled){
             switch (cube_layer){
-                case 0: spi_wrete(display_buf[display_buf_index], 0xe); break;
-                case 1: spi_wrete(display_buf[display_buf_index], 0xe); break;
-                case 2: spi_wrete(display_buf[display_buf_index], 0xe); break;
-                case 3: spi_wrete(display_buf[display_buf_index], 0xe); break;
+                case 0: spi_wrete(display_buf[display_buf_index], 0xe); cube_layer = 1; break;
+                case 1: spi_wrete(display_buf[display_buf_index], 0xd); cube_layer = 2; break;
+                case 2: spi_wrete(display_buf[display_buf_index], 0xb); cube_layer = 3; break;
+                case 3: spi_wrete(display_buf[display_buf_index], 0x7); cube_layer = 0; break;
             }
-            cube_layer = cube_layer + 1;
-            if (cube_layer > 3) cube_layer = 0;
 
             display_buf_index = display_buf_index + 1;
             if (display_buf_index >= cube_number * 4) display_buf_index = 0;
